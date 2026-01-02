@@ -1,6 +1,9 @@
 mod date;
 use date::DateModule;
 
+mod filesystem;
+use filesystem::FilesystemModule;
+
 mod invalid;
 use invalid::InvalidModule;
 

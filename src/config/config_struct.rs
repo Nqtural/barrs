@@ -13,6 +13,7 @@ pub struct Config {
 #[derive(Deserialize)]
 pub struct ModuleConfig {
     pub date: DateConfig,
+    pub filesystem: FilesystemConfig,
     pub loadavg: LoadavgConfig,
     pub memory: MemoryConfig,
     pub wpctl: WpctlConfig,
@@ -24,6 +25,14 @@ pub struct DateConfig {
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
+}
+#[derive(Deserialize)]
+pub struct FilesystemConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub format: String,
+    pub mountpoint: String,
 }
 
 #[derive(Deserialize)]
