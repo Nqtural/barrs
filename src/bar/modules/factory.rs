@@ -1,7 +1,6 @@
 use crate::config::ModuleConfig;
 use crate::Module;
-
-use crate::modules::{
+use super::{
     DateModule,
     InvalidModule,
 };

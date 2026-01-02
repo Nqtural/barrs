@@ -1,8 +1,6 @@
-use crate::config::Config;
-use crate::{
-    build_modules,
-    Module,
-};
+use crate::Config;
+use crate::Module;
+use super::build_modules;
 
 pub struct Bar {
     left: Vec<Box<dyn Module>>,
