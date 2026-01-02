@@ -1,4 +1,4 @@
-left = ["loadavg", "memory"]
+left = ["loadavg", "memory", "wpctl"]
 center = ["xworkspaces"]
 right = ["date"]
 
@@ -23,3 +23,10 @@ interval = 1
 icon = "MEM "
 icon_color = "#866fc1"
 format = "{mib}MiB ({%}%)"
+
+[modules.wpctl]
+interval = 1
+icon = "VOL "
+icon_color = "#866fc1"
+format = "{volume}%"
+format_muted = "MUTED ({volume}%)"
