@@ -3,6 +3,7 @@ use crate::Module;
 use super::{
     DateModule,
     InvalidModule,
+    LoadavgModule,
 };
 
 pub fn build_modules(
@@ -14,6 +15,7 @@ pub fn build_modules(
         .map(|s| {
             match s.as_str() {
                 "date" => Box::new(DateModule::new(&config.date)) as Box<dyn Module>,
+                "loadavg" => Box::new(LoadavgModule::new(&config.loadavg)) as Box<dyn Module>,
                 _ => Box::new(InvalidModule::new(s)) as Box<dyn Module>,
             }
         })
