@@ -1,0 +1,9 @@
+left = ["cpu", "ram"]
+center = ["xworkspaces"]
+right = ["date"]
+
+sepparator = " | "
+
+[modules.date]
+interval = 1
+format = "%H:%M:%S"
