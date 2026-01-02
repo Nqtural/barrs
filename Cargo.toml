@@ -1,5 +1,5 @@
 [package]
-name = "lemonbar-rs"
+name = "barrs"
 version = "0.1.0"
 edition = "2024"
 

@@ -2,8 +2,8 @@ use anyhow::Result;
 use std::thread;
 use std::time::Duration;
 
-use lemonbar_rs::Config;
-use lemonbar_rs::Bar;
+use barrs::Config;
+use barrs::Bar;
 
 fn main() -> Result<()> {
     let config = Config::parse()?;
