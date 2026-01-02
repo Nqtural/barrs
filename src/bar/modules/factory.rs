@@ -1,10 +1,6 @@
 use crate::config::ModuleConfig;
 use crate::Module;
-use super::{
-    DateModule,
-    InvalidModule,
-    LoadavgModule,
-};
+use super::*;
 
 pub fn build_modules(
     module_strings: &[String],
@@ -16,6 +12,7 @@ pub fn build_modules(
             match s.as_str() {
                 "date" => Box::new(DateModule::new(&config.date)) as Box<dyn Module>,
                 "loadavg" => Box::new(LoadavgModule::new(&config.loadavg)) as Box<dyn Module>,
+                "memory" => Box::new(MemoryModule::new(&config.memory)) as Box<dyn Module>,
                 _ => Box::new(InvalidModule::new(s)) as Box<dyn Module>,
             }
         })

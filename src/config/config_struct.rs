@@ -14,6 +14,7 @@ pub struct Config {
 pub struct ModuleConfig {
     pub date: DateConfig,
     pub loadavg: LoadavgConfig,
+    pub memory: MemoryConfig,
 }
 
 #[derive(Deserialize)]
@@ -26,6 +27,13 @@ pub struct DateConfig {
 
 #[derive(Deserialize)]
 pub struct LoadavgConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub format: String,
+}
+#[derive(Deserialize)]
+pub struct MemoryConfig {
     pub interval: u32,
     pub icon: Option<String>,
     pub icon_color: Option<String>,

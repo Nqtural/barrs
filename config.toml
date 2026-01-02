@@ -1,4 +1,4 @@
-left = ["loadavg", "ram"]
+left = ["loadavg", "memory"]
 center = ["xworkspaces"]
 right = ["date"]
 
@@ -17,3 +17,9 @@ interval = 1
 icon = "LA "
 icon_color = "#866fc1"
 format = "{1m} {5m} {15m} {total}"
+
+[modules.memory]
+interval = 1
+icon = "MEM "
+icon_color = "#866fc1"
+format = "{mib}MiB ({%}%)"
