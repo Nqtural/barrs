@@ -16,6 +16,9 @@ use loadavg::LoadavgModule;
 mod memory;
 use memory::MemoryModule;
 
+mod network;
+use network::NetworkModule;
+
 mod wpctl;
 use wpctl::WpctlModule;
 

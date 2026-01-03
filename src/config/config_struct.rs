@@ -17,6 +17,7 @@ pub struct ModuleConfig {
     pub filesystem: FilesystemConfig,
     pub loadavg: LoadavgConfig,
     pub memory: MemoryConfig,
+    pub network: NetworkConfig,
     pub wpctl: WpctlConfig,
     pub xworkspaces: XworkspacesConfig,
 }
@@ -62,6 +63,15 @@ pub struct MemoryConfig {
     pub interval: u32,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
+    pub format: String,
+}
+
+#[derive(Deserialize)]
+pub struct NetworkConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub interface: String,
     pub format: String,
 }
 
