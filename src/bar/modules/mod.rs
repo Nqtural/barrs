@@ -16,5 +16,8 @@ use memory::MemoryModule;
 mod wpctl;
 use wpctl::WpctlModule;
 
+mod xworkspaces;
+use xworkspaces::XworkspacesModule;
+
 mod factory;
 pub use factory::build_modules;

@@ -17,6 +17,7 @@ pub struct ModuleConfig {
     pub loadavg: LoadavgConfig,
     pub memory: MemoryConfig,
     pub wpctl: WpctlConfig,
+    pub xworkspaces: XworkspacesConfig,
 }
 
 #[derive(Deserialize)]
@@ -58,4 +59,16 @@ pub struct WpctlConfig {
     pub icon_color: Option<String>,
     pub format: String,
     pub format_muted: String,
+}
+
+#[derive(Deserialize)]
+pub struct XworkspacesConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub format_active: String,
+    pub format_empty: String,
+    pub format_occupied: String,
+    pub format_urgent: String,
+    pub sepparator: String,
 }

@@ -37,3 +37,11 @@ icon = "VOL "
 icon_color = "#866fc1"
 format = "{volume}%"
 format_muted = "MUTED ({volume}%)"
+
+[modules.xworkspaces]
+interval = 1
+format_active = "[{name}]"
+format_empty = " {name} "
+format_occupied = " {name}."
+format_urgent = " {name}!"
+sepparator = " "
