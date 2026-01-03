@@ -1,10 +1,19 @@
 left = ["loadavg", "memory", "wpctl", "filesystem"]
 center = ["xworkspaces"]
-right = ["date"]
+right = ["battery", "date"]
 
 separator = " | "
 
 frontend = "lemonbar"
+
+[modules.battery]
+interval = 1
+icon = "BAT "
+icon_color = "#866fc1"
+name = "BAT0"
+format_charging = "C: {%}% ({time})"
+format_discharging = "{%}% ({time})"
+format_full = "F: {%}%"
 
 [modules.date]
 interval = 1

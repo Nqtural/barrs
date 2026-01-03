@@ -1,3 +1,6 @@
+mod battery;
+use battery::BatteryModule;
+
 mod date;
 use date::DateModule;
 

@@ -12,6 +12,7 @@ pub struct Config {
 
 #[derive(Deserialize)]
 pub struct ModuleConfig {
+    pub battery: BatteryConfig,
     pub date: DateConfig,
     pub filesystem: FilesystemConfig,
     pub loadavg: LoadavgConfig,
@@ -21,12 +22,24 @@ pub struct ModuleConfig {
 }
 
 #[derive(Deserialize)]
+pub struct BatteryConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub name: String,
+    pub format_charging: String,
+    pub format_discharging: String,
+    pub format_full: String,
+}
+
+#[derive(Deserialize)]
 pub struct DateConfig {
     pub interval: u32,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
 }
+
 #[derive(Deserialize)]
 pub struct FilesystemConfig {
     pub interval: u32,

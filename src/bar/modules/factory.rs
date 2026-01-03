@@ -10,8 +10,9 @@ pub fn build_modules(
         .iter()
         .map(|s| {
             match s.as_str() {
-                "filesystem" => Box::new(FilesystemModule::new(&config.filesystem)) as Box<dyn Module>,
+                "battery" => Box::new(BatteryModule::new(&config.battery)) as Box<dyn Module>,
                 "date" => Box::new(DateModule::new(&config.date)) as Box<dyn Module>,
+                "filesystem" => Box::new(FilesystemModule::new(&config.filesystem)) as Box<dyn Module>,
                 "loadavg" => Box::new(LoadavgModule::new(&config.loadavg)) as Box<dyn Module>,
                 "memory" => Box::new(MemoryModule::new(&config.memory)) as Box<dyn Module>,
                 "wpctl" => Box::new(WpctlModule::new(&config.wpctl)) as Box<dyn Module>,
