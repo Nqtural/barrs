@@ -1,4 +1,4 @@
-use crate::Module;
+use crate::{Module, ModuleOutput};
 
 #[derive(Debug)]
 pub struct InvalidModule {
@@ -16,7 +16,11 @@ impl InvalidModule {
 impl Module for InvalidModule {
     fn update(&mut self) {}
 
-    fn get_value(&self) -> &str {
-        &self.value
+    fn get_value(&self) -> ModuleOutput {
+        ModuleOutput {
+            icon: None,
+            icon_color: None,
+            value: self.value.clone(),
+        }
     }
 }

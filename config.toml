@@ -2,8 +2,12 @@ left = ["cpu", "ram"]
 center = ["xworkspaces"]
 right = ["date"]
 
-sepparator = " | "
+separator = " | "
+
+frontend = "lemonbar"
 
 [modules.date]
 interval = 1
+icon = "DAT "
+icon_color = "#866fc1"
 format = "%H:%M:%S"
