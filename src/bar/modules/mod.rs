@@ -1,6 +1,9 @@
 mod battery;
 use battery::BatteryModule;
 
+mod brightnessctl;
+use brightnessctl::BrightnessctlModule;
+
 mod date;
 use date::DateModule;
 

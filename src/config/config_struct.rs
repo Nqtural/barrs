@@ -13,6 +13,7 @@ pub struct Config {
 #[derive(Deserialize)]
 pub struct ModuleConfig {
     pub battery: BatteryConfig,
+    pub brightnessctl: BrightnessctlConfig,
     pub date: DateConfig,
     pub filesystem: FilesystemConfig,
     pub loadavg: LoadavgConfig,
@@ -31,6 +32,15 @@ pub struct BatteryConfig {
     pub format_charging: String,
     pub format_discharging: String,
     pub format_full: String,
+}
+
+#[derive(Deserialize)]
+pub struct BrightnessctlConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub device_name: String,
+    pub format: String,
 }
 
 #[derive(Deserialize)]

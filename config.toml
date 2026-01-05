@@ -1,6 +1,6 @@
 left = ["loadavg", "memory", "wpctl", "filesystem"]
 center = ["xworkspaces"]
-right = ["network", "battery", "date"]
+right = ["brightnessctl", "network", "battery", "date"]
 
 separator = " | "
 
@@ -14,6 +14,13 @@ name = "BAT0"
 format_charging = "C: {%}% ({time})"
 format_discharging = "{%}% ({time})"
 format_full = "F: {%}%"
+
+[modules.brightnessctl]
+interval = 1
+icon = "BRI "
+icon_color = "#866fc1"
+device_name = "intel_backlight"
+format = "{%}%"
 
 [modules.date]
 interval = 1
