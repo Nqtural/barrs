@@ -5,7 +5,8 @@ pub struct Config {
     pub left: Vec<String>,
     pub center: Vec<String>,
     pub right: Vec<String>,
-    pub sepparator: String,
+    pub separator: String,
+    pub frontend: String,
     pub modules: ModuleConfig,
 }
 
@@ -17,5 +18,7 @@ pub struct ModuleConfig {
 #[derive(Deserialize)]
 pub struct DateConfig {
     pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
     pub format: String,
 }
