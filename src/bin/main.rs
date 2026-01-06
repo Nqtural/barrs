@@ -1,12 +1,17 @@
-use anyhow::Result;
 use std::thread;
 use std::time::Duration;
 
 use barrs::Config;
 use barrs::Bar;
 
-fn main() -> Result<()> {
-    let config = Config::parse()?;
+fn main() {
+    let config = match Config::parse() {
+        Ok(config) => config,
+        Err(e) => {
+            println!("error: {e}");
+            return;
+        }
+    };
     let mut bar = Bar::new(&config);
 
     loop {
