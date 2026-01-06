@@ -12,6 +12,7 @@ pub fn build_modules(
             match s.as_str() {
                 "battery" => Box::new(BatteryModule::new(&config.battery)) as Box<dyn Module>,
                 "brightnessctl" => Box::new(BrightnessctlModule::new(&config.brightnessctl)) as Box<dyn Module>,
+                "cpu" => Box::new(CpuModule::new(&config.cpu)) as Box<dyn Module>,
                 "cputemp" => Box::new(CputempModule::new(&config.cputemp)) as Box<dyn Module>,
                 "date" => Box::new(DateModule::new(&config.date)) as Box<dyn Module>,
                 "filesystem" => Box::new(FilesystemModule::new(&config.filesystem)) as Box<dyn Module>,

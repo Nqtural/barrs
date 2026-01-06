@@ -4,6 +4,9 @@ use battery::BatteryModule;
 mod brightnessctl;
 use brightnessctl::BrightnessctlModule;
 
+mod cpu;
+use cpu::CpuModule;
+
 mod cputemp;
 use cputemp::CputempModule;
 
