@@ -16,6 +16,7 @@ pub struct ModuleConfig {
     pub brightnessctl: BrightnessctlConfig,
     pub date: DateConfig,
     pub filesystem: FilesystemConfig,
+    pub kernel: KernelConfig,
     pub loadavg: LoadavgConfig,
     pub memory: MemoryConfig,
     pub network: NetworkConfig,
@@ -61,6 +62,14 @@ pub struct FilesystemConfig {
     pub icon_color: Option<String>,
     pub format: String,
     pub mountpoint: String,
+}
+
+#[derive(Deserialize)]
+pub struct KernelConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
+    pub format: String,
 }
 
 #[derive(Deserialize)]

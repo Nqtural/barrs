@@ -14,6 +14,7 @@ pub fn build_modules(
                 "brightnessctl" => Box::new(BrightnessctlModule::new(&config.brightnessctl)) as Box<dyn Module>,
                 "date" => Box::new(DateModule::new(&config.date)) as Box<dyn Module>,
                 "filesystem" => Box::new(FilesystemModule::new(&config.filesystem)) as Box<dyn Module>,
+                "kernel" => Box::new(KernelModule::new(&config.kernel)) as Box<dyn Module>,
                 "loadavg" => Box::new(LoadavgModule::new(&config.loadavg)) as Box<dyn Module>,
                 "memory" => Box::new(MemoryModule::new(&config.memory)) as Box<dyn Module>,
                 "network" => Box::new(NetworkModule::new(&config.network)) as Box<dyn Module>,

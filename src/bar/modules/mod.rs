@@ -13,6 +13,9 @@ use filesystem::FilesystemModule;
 mod invalid;
 use invalid::InvalidModule;
 
+mod kernel;
+use kernel::KernelModule;
+
 mod loadavg;
 use loadavg::LoadavgModule;
 

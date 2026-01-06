@@ -35,6 +35,12 @@ icon_color = "#866fc1"
 format = "{mount}: {%_used}% used ({gib_used}GiB/{gib_total}GiB)"
 mountpoint = "/"
 
+[modules.kernel]
+interval = 1
+icon = "KER "
+icon_color = "#866fc1"
+format = "{osrelease}"
+
 [modules.loadavg]
 interval = 1
 icon = "LA "
