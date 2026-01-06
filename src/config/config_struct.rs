@@ -20,6 +20,7 @@ pub struct ModuleConfig {
     pub memory: MemoryConfig,
     pub network: NetworkConfig,
     pub wpctl: WpctlConfig,
+    pub xkeyboard: XkeyboardConfig,
     pub xwindow: XwindowConfig,
     pub xworkspaces: XworkspacesConfig,
 }
@@ -93,6 +94,13 @@ pub struct WpctlConfig {
     pub icon_color: Option<String>,
     pub format: String,
     pub format_muted: String,
+}
+
+#[derive(Deserialize)]
+pub struct XkeyboardConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
 }
 
 #[derive(Deserialize)]

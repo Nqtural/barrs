@@ -25,6 +25,9 @@ use network::NetworkModule;
 mod wpctl;
 use wpctl::WpctlModule;
 
+mod xkeyboard;
+use xkeyboard::XkeyboardModule;
+
 mod xwindow;
 use xwindow::XwindowModule;
 
