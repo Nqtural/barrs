@@ -19,6 +19,7 @@ pub struct ModuleConfig {
     pub loadavg: LoadavgConfig,
     pub memory: MemoryConfig,
     pub network: NetworkConfig,
+    pub uptime: UptimeConfig,
     pub wpctl: WpctlConfig,
     pub xkeyboard: XkeyboardConfig,
     pub xwindow: XwindowConfig,
@@ -84,6 +85,14 @@ pub struct NetworkConfig {
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub interface: String,
+    pub format: String,
+}
+
+#[derive(Deserialize)]
+pub struct UptimeConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
     pub format: String,
 }
 

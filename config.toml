@@ -54,6 +54,12 @@ icon_color = "#866fc1"
 interface = "wlp0s20f3"
 format = "{iface} [{state}]: {ip}: ({up_speed_mbit}Mbit/s ↑ / {down_speed_mbit}Mbit/s ↓)"
 
+[modules.uptime]
+interval = 1
+icon = "UP "
+icon_color = "#866fc1"
+format = "{total_days}d {hours}h {minutes}m"
+
 [modules.wpctl]
 interval = 1
 icon = "VOL "

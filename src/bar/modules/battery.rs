@@ -56,7 +56,6 @@ impl Module for BatteryModule {
     }
 }
 
-
 fn read_battery_file(path: &str) -> Option<String> {
     fs::read_to_string(path).ok().map(|s| s.trim().to_string())
 }

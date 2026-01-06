@@ -17,6 +17,7 @@ pub fn build_modules(
                 "loadavg" => Box::new(LoadavgModule::new(&config.loadavg)) as Box<dyn Module>,
                 "memory" => Box::new(MemoryModule::new(&config.memory)) as Box<dyn Module>,
                 "network" => Box::new(NetworkModule::new(&config.network)) as Box<dyn Module>,
+                "uptime" => Box::new(UptimeModule::new(&config.uptime)) as Box<dyn Module>,
                 "wpctl" => Box::new(WpctlModule::new(&config.wpctl)) as Box<dyn Module>,
                 "xkeyboard" => Box::new(XkeyboardModule::new(&config.xkeyboard)) as Box<dyn Module>,
                 "xwindow" => Box::new(XwindowModule::new(&config.xwindow)) as Box<dyn Module>,

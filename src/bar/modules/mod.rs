@@ -22,6 +22,9 @@ use memory::MemoryModule;
 mod network;
 use network::NetworkModule;
 
+mod uptime;
+use uptime::UptimeModule;
+
 mod wpctl;
 use wpctl::WpctlModule;
 
