@@ -1,5 +1,5 @@
 left = ["loadavg", "memory", "wpctl", "filesystem"]
-center = ["xworkspaces"]
+center = ["xworkspaces", "xwindow"]
 right = ["brightnessctl", "network", "battery", "date"]
 
 separator = " | "
@@ -60,6 +60,10 @@ icon = "VOL "
 icon_color = "#866fc1"
 format = "{volume}%"
 format_muted = "MUTED ({volume}%)"
+
+[modules.xwindow]
+interval = 1
+max_length = 50
 
 [modules.xworkspaces]
 interval = 1

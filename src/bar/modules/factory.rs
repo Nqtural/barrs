@@ -18,6 +18,7 @@ pub fn build_modules(
                 "memory" => Box::new(MemoryModule::new(&config.memory)) as Box<dyn Module>,
                 "network" => Box::new(NetworkModule::new(&config.network)) as Box<dyn Module>,
                 "wpctl" => Box::new(WpctlModule::new(&config.wpctl)) as Box<dyn Module>,
+                "xwindow" => Box::new(XwindowModule::new(&config.xwindow)) as Box<dyn Module>,
                 "xworkspaces" => Box::new(XworkspacesModule::new(&config.xworkspaces)) as Box<dyn Module>,
                 _ => Box::new(InvalidModule::new(s)) as Box<dyn Module>,
             }

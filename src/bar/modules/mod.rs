@@ -25,6 +25,9 @@ use network::NetworkModule;
 mod wpctl;
 use wpctl::WpctlModule;
 
+mod xwindow;
+use xwindow::XwindowModule;
+
 mod xworkspaces;
 use xworkspaces::XworkspacesModule;
 
