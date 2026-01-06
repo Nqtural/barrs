@@ -14,6 +14,7 @@ pub struct Config {
 pub struct ModuleConfig {
     pub battery: BatteryConfig,
     pub brightnessctl: BrightnessctlConfig,
+    pub cputemp: CputempConfig,
     pub date: DateConfig,
     pub filesystem: FilesystemConfig,
     pub kernel: KernelConfig,
@@ -44,6 +45,14 @@ pub struct BrightnessctlConfig {
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub device_name: String,
+    pub format: String,
+}
+
+#[derive(Deserialize)]
+pub struct CputempConfig {
+    pub interval: u32,
+    pub icon: Option<String>,
+    pub icon_color: Option<String>,
     pub format: String,
 }
 

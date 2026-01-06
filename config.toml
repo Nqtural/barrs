@@ -22,6 +22,12 @@ icon_color = "#866fc1"
 device_name = "intel_backlight"
 format = "{%}%"
 
+[modules.cputemp]
+interval = 1
+icon = "TEM "
+icon_color = "#866fc1"
+format = "{c}°C"
+
 [modules.date]
 interval = 1
 icon = "DAT "
