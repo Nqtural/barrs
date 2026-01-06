@@ -1,13 +1,103 @@
-left = ["cpu", "ram"]
-center = ["xworkspaces"]
-right = ["date"]
+left = ["loadavg", "memory", "wpctl", "filesystem"]
+center = ["xworkspaces", "xwindow"]
+right = ["brightnessctl", "network", "battery", "xkeyboard", "date"]
 
 separator = " | "
 
 frontend = "lemonbar"
+
+[modules.battery]
+interval = 1
+icon = "BAT "
+icon_color = "#866fc1"
+name = "BAT0"
+format_charging = "C: {%}% ({time})"
+format_discharging = "{%}% ({time})"
+format_full = "F: {%}%"
+
+[modules.brightnessctl]
+interval = 1
+icon = "BRI "
+icon_color = "#866fc1"
+device_name = "intel_backlight"
+format = "{%}%"
+
+[modules.cpu]
+interval = 1
+icon = "CPU "
+icon_color = "#866fc1"
+format = "{%}%"
+
+[modules.cputemp]
+interval = 1
+icon = "TEM "
+icon_color = "#866fc1"
+format = "{c}°C"
 
 [modules.date]
 interval = 1
 icon = "DAT "
 icon_color = "#866fc1"
 format = "%H:%M:%S"
+
+[modules.filesystem]
+interval = 1
+icon = "FS "
+icon_color = "#866fc1"
+format = "{mount}: {%_used}% used ({gib_used}GiB/{gib_total}GiB)"
+mountpoint = "/"
+
+[modules.kernel]
+interval = 1
+icon = "KER "
+icon_color = "#866fc1"
+format = "{osrelease}"
+
+[modules.loadavg]
+interval = 1
+icon = "LA "
+icon_color = "#866fc1"
+format = "{1m} {5m} {15m} {total}"
+
+[modules.memory]
+interval = 1
+icon = "MEM "
+icon_color = "#866fc1"
+format = "{mib}MiB ({%}%)"
+
+[modules.network]
+interval = 1
+icon = "NET "
+icon_color = "#866fc1"
+interface = "wlp0s20f3"
+format = "{iface} [{state}]: {ip}: ({up_speed_mbit}Mbit/s ↑ / {down_speed_mbit}Mbit/s ↓)"
+
+[modules.uptime]
+interval = 1
+icon = "UP "
+icon_color = "#866fc1"
+format = "{total_days}d {hours}h {minutes}m"
+
+[modules.wpctl]
+interval = 1
+icon = "VOL "
+icon_color = "#866fc1"
+format = "{volume}%"
+format_muted = "MUTED ({volume}%)"
+
+[modules.xkeyboard]
+interval = 1
+icon = "LAY "
+icon_color = "#866fc1"
+
+[modules.xwindow]
+interval = 1
+max_length = 50
+
+[modules.xworkspaces]
+interval = 1
+format_active = "[{name}]"
+format_empty = " {name} "
+format_occupied = " {name}."
+format_urgent = " {name}!"
+sepparator = " "

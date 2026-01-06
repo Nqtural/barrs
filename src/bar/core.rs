@@ -60,15 +60,18 @@ impl Bar {
     }
 
     fn construct_lemonbar_module(&self, m: &ModuleOutput) -> String {
+        let safe_value = m.value.replace('%', "%%");
         match (&m.icon, &m.icon_color) {
             (Some(icon), Some(color)) => {
-                format!("%{{F{}}}{}%{{F-}}{}", color, icon, m.value)
+                let safe_icon = icon.replace('%', "%%");
+                format!("%{{F{}}}{}%{{F-}}{}", color, safe_icon, safe_value)
             }
             (Some(icon), None) => {
-                format!("{}{}", icon, m.value)
+                let safe_icon = icon.replace('%', "%%");
+                format!("{}{}", safe_icon, safe_value)
             }
             (None, _) => {
-                m.value.clone()
+                safe_value.clone()
             }
         }
     }
