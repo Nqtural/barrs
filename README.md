@@ -14,6 +14,8 @@ git clone https://github.com/Nqtural/barrs
 cd barrs
 cargo build --release
 sudo cp target/release/main /usr/bin/barrs
+mkdir -p $XDG_CONFIG_HOME/barrs
+cp config.toml $XDG_CONFIG_HOME/barrs/config.toml
 ```
 
 ## Usage
