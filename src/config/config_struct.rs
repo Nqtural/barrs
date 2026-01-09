@@ -145,6 +145,7 @@ pub struct XwindowConfig {
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub max_length: u32,
+    pub empty_name: String,
 }
 
 #[derive(Deserialize)]

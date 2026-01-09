@@ -11,23 +11,26 @@ pub struct XwindowModule {
     icon: Option<String>,
     icon_color: Option<String>,
     max_length: u32,
+    user_empty_string: String,
 }
 
 impl XwindowModule {
     pub fn new(config: &XwindowConfig) -> Self {
         let max_length = config.max_length;
+        let user_empty_string = config.empty_name.clone();
         Self {
-            current_window: get_active_window_title(max_length),
+            current_window: get_active_window_title(max_length, &user_empty_string),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             max_length,
+            user_empty_string,
         }
     }
 }
 
 impl Module for XwindowModule {
     fn update(&mut self) {
-        self.current_window = get_active_window_title(self.max_length);
+        self.current_window = get_active_window_title(self.max_length, &self.user_empty_string);
     }
 
     fn get_value(&self) -> ModuleOutput {
@@ -39,7 +42,7 @@ impl Module for XwindowModule {
     }
 }
 
-fn get_active_window_title(max_length: u32) -> String {
+fn get_active_window_title(max_length: u32, user_empty_string: &str) -> String {
     let (conn, screen_num) = match RustConnection::connect(None) {
         Ok(result) => result,
         Err(e) => return format!("error: {e}"),
@@ -69,7 +72,7 @@ fn get_active_window_title(max_length: u32) -> String {
     };
 
     if active_window_id == 0 {
-        return "No active window".to_string();
+        return user_empty_string.to_string();
     }
 
     let net_wm_name = conn
