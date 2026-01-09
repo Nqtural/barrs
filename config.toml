@@ -93,6 +93,7 @@ icon_color = "#866fc1"
 [modules.xwindow]
 interval = 1
 max_length = 50
+empty_name = "Desktop"
 
 [modules.xworkspaces]
 interval = 1
