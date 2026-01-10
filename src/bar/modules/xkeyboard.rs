@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto;
 use x11rb::rust_connection::RustConnection;
@@ -7,7 +10,8 @@ use crate::{Module, ModuleOutput};
 /// Display current keyboard layout on X11
 #[derive(Debug)]
 pub struct XkeyboardModule {
-    current_layout: String,
+    interval: u64,
+    current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
 }
@@ -15,23 +19,28 @@ pub struct XkeyboardModule {
 impl XkeyboardModule {
     pub fn new(config: &XkeyboardConfig) -> Self {
         Self {
-            current_layout: get_current_keyboard_layout(),
+            interval: config.interval,
+            current_layout: Mutex::new(get_current_keyboard_layout()),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
         }
     }
 }
 
+#[async_trait]
 impl Module for XkeyboardModule {
-    fn update(&mut self) {
-        self.current_layout = get_current_keyboard_layout();
+    async fn run(&self) {
+        loop {
+            *self.current_layout.lock().await = get_current_keyboard_layout();
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_layout.clone()
+            value: self.current_layout.lock().await.clone()
         }
     }
 }

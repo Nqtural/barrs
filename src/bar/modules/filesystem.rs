@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use std::ffi::CString;
 use libc;
 use std::mem::MaybeUninit;
@@ -7,7 +10,8 @@ use crate::{Module, ModuleOutput};
 /// Display information about the filesystem using a configured format
 #[derive(Debug)]
 pub struct FilesystemModule {
-    current_fs_info: String,
+    interval: u64,
+    current_fs_info: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
@@ -19,7 +23,8 @@ impl FilesystemModule {
         let format = config.format.clone();
         let mountpoint = config.mountpoint.clone();
         Self {
-            current_fs_info: fs_info_from_string(&format, &mountpoint),
+            interval: config.interval,
+            current_fs_info: Mutex::new(fs_info_from_string(&format, &mountpoint)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
@@ -28,16 +33,20 @@ impl FilesystemModule {
     }
 }
 
+#[async_trait]
 impl Module for FilesystemModule {
-    fn update(&mut self) {
-        self.current_fs_info = fs_info_from_string(&self.format, &self.mountpoint);
+    async fn run(&self) {
+        loop {
+            *self.current_fs_info.lock().await = fs_info_from_string(&self.format, &self.mountpoint);
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_fs_info.clone(),
+            value: self.current_fs_info.lock().await.clone(),
         }
     }
 }

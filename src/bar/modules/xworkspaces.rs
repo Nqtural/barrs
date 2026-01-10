@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use anyhow::Result;
 use std::collections::HashSet;
 use x11rb::connection::Connection;
@@ -9,7 +12,8 @@ use crate::{Module, ModuleOutput};
 /// Display X11 workspaces using a configured format
 #[derive(Debug)]
 pub struct XworkspacesModule {
-    current_layout: String,
+    interval: u64,
+    current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format_active: String,
@@ -27,13 +31,14 @@ impl XworkspacesModule {
         let format_urgent = config.format_urgent.clone();
         let sepparator = config.sepparator.clone();
         Self {
-            current_layout: format_workspaces(
+            interval: config.interval,
+            current_layout: Mutex::new(format_workspaces(
                 &format_active,
                 &format_empty,
                 &format_occupied,
                 &format_urgent,
                 &sepparator,
-            ),
+            )),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format_active,
@@ -45,22 +50,26 @@ impl XworkspacesModule {
     }
 }
 
+#[async_trait]
 impl Module for XworkspacesModule {
-    fn update(&mut self) {
-        self.current_layout = format_workspaces(
-            &self.format_active,
-            &self.format_empty,
-            &self.format_occupied,
-            &self.format_urgent,
-            &self.sepparator,
-        );
+    async fn run(&self) {
+        loop {
+            *self.current_layout.lock().await = format_workspaces(
+                &self.format_active,
+                &self.format_empty,
+                &self.format_occupied,
+                &self.format_urgent,
+                &self.sepparator,
+            );
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_layout.clone()
+            value: self.current_layout.lock().await.clone()
         }
     }
 }

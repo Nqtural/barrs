@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use std::fs;
 use crate::config::UptimeConfig;
 use crate::{Module, ModuleOutput};
@@ -5,7 +8,8 @@ use crate::{Module, ModuleOutput};
 /// Display uptime using a configured format
 #[derive(Debug)]
 pub struct UptimeModule {
-    current_uptime: String,
+    interval: u64,
+    current_uptime: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
@@ -15,7 +19,8 @@ impl UptimeModule {
     pub fn new(config: &UptimeConfig) -> Self {
         let format = config.format.clone();
         Self {
-            current_uptime: uptime_from_string(&format),
+            interval: config.interval,
+            current_uptime: Mutex::new(uptime_from_string(&format)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
@@ -23,16 +28,20 @@ impl UptimeModule {
     }
 }
 
+#[async_trait]
 impl Module for UptimeModule {
-    fn update(&mut self) {
-        self.current_uptime = uptime_from_string(&self.format);
+    async fn run(&self) {
+        loop {
+            *self.current_uptime.lock().await = uptime_from_string(&self.format);
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_uptime.clone(),
+            value: self.current_uptime.lock().await.clone(),
         }
     }
 }

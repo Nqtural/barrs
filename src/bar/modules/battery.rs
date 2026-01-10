@@ -1,11 +1,15 @@
+use async_trait::async_trait;
 use std::fs;
+use tokio::sync::Mutex;
+use tokio::time::{sleep, Duration};
 use crate::config::BatteryConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display battery info using a configured format
 #[derive(Debug)]
 pub struct BatteryModule {
-    current_battery: String,
+    interval: u64,
+    current_battery: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     name: String,
@@ -16,17 +20,19 @@ pub struct BatteryModule {
 
 impl BatteryModule {
     pub fn new(config: &BatteryConfig) -> Self {
+        let interval = config.interval;
         let name = config.name.clone();
         let format_charging = config.format_charging.clone();
         let format_discharging = config.format_discharging.clone();
         let format_full = config.format_full.clone();
         Self {
-            current_battery: battery_from_string(
+            interval,
+            current_battery: Mutex::new(battery_from_string(
                 &name,
                 &format_charging,
                 &format_discharging,
                 &format_full,
-            ),
+            )),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             name,
@@ -37,21 +43,27 @@ impl BatteryModule {
     }
 }
 
+#[async_trait]
 impl Module for BatteryModule {
-    fn update(&mut self) {
-        self.current_battery = battery_from_string(
-            &self.name,
-            &self.format_charging,
-            &self.format_discharging,
-            &self.format_full,
-        );
+    async fn run(&self) {
+        loop {
+            {
+                *self.current_battery.lock().await = battery_from_string(
+                    &self.name,
+                    &self.format_charging,
+                    &self.format_discharging,
+                    &self.format_full,
+                );
+            }
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_battery.clone(),
+            value: self.current_battery.lock().await.clone(),
         }
     }
 }

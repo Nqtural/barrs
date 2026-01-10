@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::{AtomEnum, ConnectionExt};
 use x11rb::rust_connection::RustConnection;
@@ -7,7 +10,8 @@ use crate::{Module, ModuleOutput};
 /// Display current window name on X11
 #[derive(Debug)]
 pub struct XwindowModule {
-    current_window: String,
+    interval: u64,
+    current_window: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     max_length: u32,
@@ -19,7 +23,8 @@ impl XwindowModule {
         let max_length = config.max_length;
         let user_empty_string = config.empty_name.clone();
         Self {
-            current_window: get_active_window_title(max_length, &user_empty_string),
+            interval: config.interval,
+            current_window: Mutex::new(get_active_window_title(max_length, &user_empty_string)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             max_length,
@@ -28,16 +33,20 @@ impl XwindowModule {
     }
 }
 
+#[async_trait]
 impl Module for XwindowModule {
-    fn update(&mut self) {
-        self.current_window = get_active_window_title(self.max_length, &self.user_empty_string);
+    async fn run(&self) {
+        loop {
+            *self.current_window.lock().await = get_active_window_title(self.max_length, &self.user_empty_string);
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_window.clone()
+            value: self.current_window.lock().await.clone()
         }
     }
 }

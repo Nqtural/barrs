@@ -1,11 +1,12 @@
+use std::sync::Arc;
 use crate::Config;
 use crate::{Module, ModuleOutput};
 use super::build_modules;
 
 pub struct Bar {
-    left: Vec<Box<dyn Module>>,
-    center: Vec<Box<dyn Module>>,
-    right: Vec<Box<dyn Module>>,
+    left: Vec<Arc<dyn Module + Sync + Send>>,
+    center: Vec<Arc<dyn Module + Sync + Send>>,
+    right: Vec<Arc<dyn Module + Sync + Send>>,
 
     separator: String,
     frontend: String,
@@ -22,41 +23,41 @@ impl Bar {
         }
     }
 
-    pub fn update(&mut self) {
-        [&mut self.left, &mut self.center, &mut self.right]
-            .iter_mut()
-                .for_each(|ml| {
-                    ml.iter_mut().for_each(|m| m.update());
-                });
-    }
-
-    pub fn construct(&self) -> String {
+    pub async fn construct(&self) -> String {
         match self.frontend.as_str() {
-            "lemonbar" => self.construct_lemonbar(),
+            "lemonbar" => self.construct_lemonbar().await,
             _ => {
                 eprintln!("warning: frontend {} not implemented", &self.frontend);
-                self.construct_generic()
+                self.construct_generic().await
             }
         }
     }
 
-    fn collect_sections(
+    pub async fn start_modules(&self) {
+        for module in &self.left {
+            let module_clone = Arc::clone(module);
+            tokio::spawn(async move {
+                module_clone.run().await;
+            });
+        }
+    }
+
+    async fn collect_sections(
         &self,
     ) -> (Vec<ModuleOutput>, Vec<ModuleOutput>, Vec<ModuleOutput>) {
-        (
-            self.left
-                .iter()
-                .map(|m| m.get_value())
-                .collect::<Vec<ModuleOutput>>(),
-            self.center
-                .iter()
-                .map(|m| m.get_value())
-                .collect::<Vec<ModuleOutput>>(),
-            self.right
-                .iter()
-                .map(|m| m.get_value())
-                .collect::<Vec<ModuleOutput>>(),
-        )
+        async fn collect(modules: &[Arc<dyn Module + Send + Sync>]) -> Vec<ModuleOutput> {
+            let mut results = Vec::with_capacity(modules.len());
+            for m in modules {
+                results.push(m.get_value().await);
+            }
+            results
+        }
+
+        let left = collect(&self.left).await;
+        let center = collect(&self.center).await;
+        let right = collect(&self.right).await;
+
+        (left, center, right)
     }
 
     fn construct_lemonbar_module(&self, m: &ModuleOutput) -> String {
@@ -84,8 +85,8 @@ impl Bar {
             .join(&self.separator)
     }
 
-    fn construct_lemonbar(&self) -> String {
-        let (left, center, right) = self.collect_sections();
+    async fn construct_lemonbar(&self) -> String {
+        let (left, center, right) = self.collect_sections().await;
 
         format!(
             // alignement in lemonbar is done with %{l}, %{c} and %{r}
@@ -96,8 +97,8 @@ impl Bar {
         )
     }
 
-    fn construct_generic(&self) -> String {
-        let (left, center, right) = self.collect_sections();
+    async fn construct_generic(&self) -> String {
+        let (left, center, right) = self.collect_sections().await;
         [
             left
                 .iter()

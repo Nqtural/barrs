@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use std::fs;
 use std::path::Path;
 use crate::config::CputempConfig;
@@ -6,7 +9,8 @@ use crate::{Module, ModuleOutput};
 /// Display temperature of CPU using a configured format
 #[derive(Debug)]
 pub struct CputempModule {
-    current_temp: String,
+    interval: u64,
+    current_temp: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
@@ -16,7 +20,8 @@ impl CputempModule {
     pub fn new(config: &CputempConfig) -> Self {
         let format = config.format.clone();
         Self {
-            current_temp: cputemp_from_string(&format),
+            interval: config.interval,
+            current_temp: Mutex::new(cputemp_from_string(&format)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
@@ -24,16 +29,20 @@ impl CputempModule {
     }
 }
 
+#[async_trait]
 impl Module for CputempModule {
-    fn update(&mut self) {
-        self.current_temp = cputemp_from_string(&self.format);
+    async fn run(&self) {
+        loop {
+            *self.current_temp.lock().await = cputemp_from_string(&self.format);
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_temp.clone(),
+            value: self.current_temp.lock().await.clone(),
         }
     }
 }

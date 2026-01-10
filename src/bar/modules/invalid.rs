@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use crate::{Module, ModuleOutput};
 
 #[derive(Debug)]
@@ -13,10 +14,11 @@ impl InvalidModule {
     }
 }
 
+#[async_trait]
 impl Module for InvalidModule {
-    fn update(&mut self) {}
+    async fn run(&self) {}
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: None,
             icon_color: None,

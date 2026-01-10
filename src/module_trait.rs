@@ -1,6 +1,8 @@
+use async_trait::async_trait;
 use super::ModuleOutput;
 
-pub trait Module {
-    fn update(&mut self);
-    fn get_value(&self) -> ModuleOutput;
+#[async_trait]
+pub trait Module: Send + Sync {
+    async fn run(&self);
+    async fn get_value(&self) -> ModuleOutput;
 }

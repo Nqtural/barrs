@@ -4,7 +4,8 @@ use std::time::Duration;
 use barrs::Config;
 use barrs::Bar;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let config = match Config::parse() {
         Ok(config) => config,
         Err(e) => {
@@ -12,13 +13,13 @@ fn main() {
             return;
         }
     };
-    let mut bar = Bar::new(&config);
+    let bar = Bar::new(&config);
+    bar.start_modules().await;
 
     loop {
-        bar.update();
         println!(
             "{}",
-            bar.construct(),
+            bar.construct().await,
         );
         thread::sleep(Duration::from_secs(1));
     }

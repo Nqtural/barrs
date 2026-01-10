@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use std::process::Command;
 use crate::config::BrightnessctlConfig;
 use crate::{Module, ModuleOutput};
@@ -5,7 +8,8 @@ use crate::{Module, ModuleOutput};
 /// Display brightness info about a given device using a configured format
 #[derive(Debug)]
 pub struct BrightnessctlModule {
-    current_brightness: String,
+    interval: u64,
+    current_brightness: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     device_name: String,
@@ -17,10 +21,11 @@ impl BrightnessctlModule {
         let device_name = config.device_name.clone();
         let format = config.format.clone();
         Self {
-            current_brightness: brightness_from_string(
+            interval: config.interval,
+            current_brightness: Mutex::new(brightness_from_string(
                 &device_name,
                 &format,
-            ),
+            )),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             device_name,
@@ -29,19 +34,25 @@ impl BrightnessctlModule {
     }
 }
 
+#[async_trait]
 impl Module for BrightnessctlModule {
-    fn update(&mut self) {
-        self.current_brightness = brightness_from_string(
-            &self.device_name,
-            &self.format,
-        );
+    async fn run(&self) {
+        loop {
+            {
+                *self.current_brightness.lock().await = brightness_from_string(
+                    &self.device_name,
+                    &self.format,
+                );
+            }
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_brightness.clone(),
+            value: self.current_brightness.lock().await.clone(),
         }
     }
 }

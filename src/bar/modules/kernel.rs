@@ -1,3 +1,6 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use std::fs;
 use crate::config::KernelConfig;
 use crate::{Module, ModuleOutput};
@@ -5,7 +8,8 @@ use crate::{Module, ModuleOutput};
 /// Display date using a configured format
 #[derive(Debug)]
 pub struct KernelModule {
-    kernel_info: String,
+    interval: u64,
+    kernel_info: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
@@ -15,7 +19,8 @@ impl KernelModule {
     pub fn new(config: &KernelConfig) -> Self {
         let format = config.format.clone();
         Self {
-            kernel_info: kernel_info_from_string(&format),
+            interval: config.interval,
+            kernel_info: Mutex::new(kernel_info_from_string(&format)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
@@ -23,16 +28,20 @@ impl KernelModule {
     }
 }
 
+#[async_trait]
 impl Module for KernelModule {
-    fn update(&mut self) {
-        self.kernel_info = kernel_info_from_string(&self.format);
+    async fn run(&self) {
+        loop {
+            *self.kernel_info.lock().await = kernel_info_from_string(&self.format);
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.kernel_info.clone(),
+            value: self.kernel_info.lock().await.clone(),
         }
     }
 }
