@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use tokio::sync::Mutex;
-use tokio::time::{Duration, sleep};
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto;
 use x11rb::rust_connection::RustConnection;
@@ -10,7 +9,7 @@ use crate::{Module, ModuleOutput};
 /// Display current keyboard layout on X11
 #[derive(Debug)]
 pub struct XkeyboardModule {
-    interval: u64,
+    signal_id: Option<u8>,
     current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -19,7 +18,7 @@ pub struct XkeyboardModule {
 impl XkeyboardModule {
     pub fn new(config: &XkeyboardConfig) -> Self {
         Self {
-            interval: config.interval,
+            signal_id: config.signal_id,
             current_layout: Mutex::new(get_current_keyboard_layout()),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
@@ -29,11 +28,12 @@ impl XkeyboardModule {
 
 #[async_trait]
 impl Module for XkeyboardModule {
+    fn signal_id(&self) -> Option<u8> {
+        self.signal_id
+    }
+
     async fn run(&self) {
-        loop {
-            *self.current_layout.lock().await = get_current_keyboard_layout();
-            sleep(Duration::from_secs(self.interval)).await;
-        }
+        *self.current_layout.lock().await = get_current_keyboard_layout();
     }
 
     async fn get_value(&self) -> ModuleOutput {

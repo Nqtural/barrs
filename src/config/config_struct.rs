@@ -42,7 +42,7 @@ pub struct BatteryConfig {
 
 #[derive(Deserialize)]
 pub struct BrightnessctlConfig {
-    pub interval: u64,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub device_name: String,
@@ -125,7 +125,7 @@ pub struct UptimeConfig {
 
 #[derive(Deserialize)]
 pub struct WpctlConfig {
-    pub interval: u64,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -134,14 +134,14 @@ pub struct WpctlConfig {
 
 #[derive(Deserialize)]
 pub struct XkeyboardConfig {
-    pub interval: u64,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct XwindowConfig {
-    pub interval: u64,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub max_length: u32,
@@ -150,7 +150,7 @@ pub struct XwindowConfig {
 
 #[derive(Deserialize)]
 pub struct XworkspacesConfig {
-    pub interval: u64,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format_active: String,

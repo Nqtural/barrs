@@ -1,4 +1,6 @@
 use std::sync::Arc;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::UnixListener;
 use crate::Config;
 use crate::{Module, ModuleOutput};
 use super::build_modules;
@@ -40,6 +42,43 @@ impl Bar {
                 module_clone.run().await;
             });
         }
+    }
+
+    /// Listens for commands sent using the --update flag
+    pub async fn start_command_listener(&self, socket_path: &str) {
+        let _ = std::fs::remove_file(socket_path);
+        let listener = UnixListener::bind(socket_path).unwrap();
+
+        let modules: Vec<_> = self.left
+            .iter()
+            .chain(self.center.iter())
+            .chain(self.right.iter())
+            .cloned()
+            .collect();
+
+        tokio::spawn(async move {
+            loop {
+                let (mut stream, _) = listener.accept().await.unwrap();
+                let mut buf = [0u8; 64];
+                let n = stream.read(&mut buf).await.unwrap();
+
+                let msg = std::str::from_utf8(&buf[..n]).unwrap().trim();
+
+                if let Some(id) = msg.strip_prefix("update ")
+                && let Ok(id) = id.parse::<u8>() {
+                    for m in &modules {
+                        if m.signal_id() == Some(id) {
+                            let m = m.clone();
+                            tokio::spawn(async move {
+                                m.run().await;
+                            });
+                        }
+                    }
+                }
+
+                let _ = stream.write_all(b"ok\n").await;
+            }
+        });
     }
 
     async fn collect_sections(

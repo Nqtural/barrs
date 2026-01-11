@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use tokio::sync::Mutex;
-use tokio::time::{Duration, sleep};
 use std::process::Command;
 use crate::config::BrightnessctlConfig;
 use crate::{Module, ModuleOutput};
@@ -8,7 +7,7 @@ use crate::{Module, ModuleOutput};
 /// Display brightness info about a given device using a configured format
 #[derive(Debug)]
 pub struct BrightnessctlModule {
-    interval: u64,
+    signal_id: Option<u8>,
     current_brightness: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -21,7 +20,7 @@ impl BrightnessctlModule {
         let device_name = config.device_name.clone();
         let format = config.format.clone();
         Self {
-            interval: config.interval,
+            signal_id: config.signal_id,
             current_brightness: Mutex::new(brightness_from_string(
                 &device_name,
                 &format,
@@ -36,16 +35,15 @@ impl BrightnessctlModule {
 
 #[async_trait]
 impl Module for BrightnessctlModule {
+    fn signal_id(&self) -> Option<u8> {
+        self.signal_id
+    }
+
     async fn run(&self) {
-        loop {
-            {
-                *self.current_brightness.lock().await = brightness_from_string(
-                    &self.device_name,
-                    &self.format,
-                );
-            }
-            sleep(Duration::from_secs(self.interval)).await;
-        }
+        *self.current_brightness.lock().await = brightness_from_string(
+            &self.device_name,
+            &self.format,
+        );
     }
 
     async fn get_value(&self) -> ModuleOutput {

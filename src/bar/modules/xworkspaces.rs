@@ -1,6 +1,5 @@
 use async_trait::async_trait;
 use tokio::sync::Mutex;
-use tokio::time::{Duration, sleep};
 use anyhow::Result;
 use std::collections::HashSet;
 use x11rb::connection::Connection;
@@ -12,7 +11,7 @@ use crate::{Module, ModuleOutput};
 /// Display X11 workspaces using a configured format
 #[derive(Debug)]
 pub struct XworkspacesModule {
-    interval: u64,
+    signal_id: Option<u8>,
     current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -31,7 +30,7 @@ impl XworkspacesModule {
         let format_urgent = config.format_urgent.clone();
         let sepparator = config.sepparator.clone();
         Self {
-            interval: config.interval,
+            signal_id: config.signal_id,
             current_layout: Mutex::new(format_workspaces(
                 &format_active,
                 &format_empty,
@@ -52,17 +51,18 @@ impl XworkspacesModule {
 
 #[async_trait]
 impl Module for XworkspacesModule {
+    fn signal_id(&self) -> Option<u8> {
+        self.signal_id
+    }
+
     async fn run(&self) {
-        loop {
-            *self.current_layout.lock().await = format_workspaces(
-                &self.format_active,
-                &self.format_empty,
-                &self.format_occupied,
-                &self.format_urgent,
-                &self.sepparator,
-            );
-            sleep(Duration::from_secs(self.interval)).await;
-        }
+        *self.current_layout.lock().await = format_workspaces(
+            &self.format_active,
+            &self.format_empty,
+            &self.format_occupied,
+            &self.format_urgent,
+            &self.sepparator,
+        );
     }
 
     async fn get_value(&self) -> ModuleOutput {
