@@ -1,5 +1,4 @@
-use std::thread;
-use std::time::Duration;
+use tokio::time::{Duration, sleep};
 
 use barrs::Config;
 use barrs::Bar;
@@ -14,13 +13,13 @@ async fn main() {
         }
     };
     let bar = Bar::new(&config);
-    bar.start_modules().await;
+    bar.start_modules();
 
     loop {
         println!(
             "{}",
             bar.construct().await,
         );
-        thread::sleep(Duration::from_secs(1));
+        sleep(Duration::from_secs(1)).await;
     }
 }

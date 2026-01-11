@@ -33,8 +33,8 @@ impl Bar {
         }
     }
 
-    pub async fn start_modules(&self) {
-        for module in &self.left {
+    pub fn start_modules(&self) {
+        for module in self.left.iter().chain(self.center.iter()).chain(self.right.iter()) {
             let module_clone = Arc::clone(module);
             tokio::spawn(async move {
                 module_clone.run().await;
