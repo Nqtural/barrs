@@ -3,7 +3,7 @@ use tokio::sync::Mutex;
 use anyhow::Result;
 use std::collections::HashSet;
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::{AtomEnum, ConnectionExt};
+use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
 use x11rb::rust_connection::RustConnection;
 use crate::config::XworkspacesConfig;
 use crate::{Module, ModuleOutput};
@@ -11,7 +11,6 @@ use crate::{Module, ModuleOutput};
 /// Display X11 workspaces using a configured format
 #[derive(Debug)]
 pub struct XworkspacesModule {
-    signal_id: Option<u8>,
     current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -30,7 +29,6 @@ impl XworkspacesModule {
         let format_urgent = config.format_urgent.clone();
         let sepparator = config.sepparator.clone();
         Self {
-            signal_id: config.signal_id,
             current_layout: Mutex::new(format_workspaces(
                 &format_active,
                 &format_empty,
@@ -51,18 +49,30 @@ impl XworkspacesModule {
 
 #[async_trait]
 impl Module for XworkspacesModule {
-    fn signal_id(&self) -> Option<u8> {
-        self.signal_id
-    }
-
     async fn run(&self) {
-        *self.current_layout.lock().await = format_workspaces(
-            &self.format_active,
-            &self.format_empty,
-            &self.format_occupied,
-            &self.format_urgent,
-            &self.sepparator,
-        );
+        let (conn, screen_num) = RustConnection::connect(None).unwrap();
+        let screen = &conn.setup().roots[screen_num];
+        let root = screen.root;
+        conn.change_window_attributes(
+            root,
+            &ChangeWindowAttributesAux::new().event_mask(EventMask::PROPERTY_CHANGE),
+        ).unwrap();
+        conn.flush().unwrap();
+
+        loop {
+            // Not filtering to only update on active workspace change
+            // causes multiple redraws, but is necessary for updates to
+            // urgent/occupied fields without changing active workspace
+            conn.wait_for_event().unwrap();
+
+            *self.current_layout.lock().await = format_workspaces(
+                &self.format_active,
+                &self.format_empty,
+                &self.format_occupied,
+                &self.format_urgent,
+                &self.sepparator,
+            );
+        }
     }
 
     async fn get_value(&self) -> ModuleOutput {

@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use tokio::sync::Mutex;
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::{AtomEnum, ConnectionExt};
+use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
 use x11rb::rust_connection::RustConnection;
 use crate::config::XwindowConfig;
 use crate::{Module, ModuleOutput};
@@ -9,7 +9,6 @@ use crate::{Module, ModuleOutput};
 /// Display current window name on X11
 #[derive(Debug)]
 pub struct XwindowModule {
-    signal_id: Option<u8>,
     current_window: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -22,7 +21,6 @@ impl XwindowModule {
         let max_length = config.max_length;
         let user_empty_string = config.empty_name.clone();
         Self {
-            signal_id: config.signal_id,
             current_window: Mutex::new(get_active_window_title(max_length, &user_empty_string)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
@@ -34,12 +32,20 @@ impl XwindowModule {
 
 #[async_trait]
 impl Module for XwindowModule {
-    fn signal_id(&self) -> Option<u8> {
-        self.signal_id
-    }
-
     async fn run(&self) {
-        *self.current_window.lock().await = get_active_window_title(self.max_length, &self.user_empty_string);
+        let (conn, screen_num) = RustConnection::connect(None).unwrap();
+        let screen = &conn.setup().roots[screen_num];
+        let root = screen.root;
+        conn.change_window_attributes(
+            root,
+            &ChangeWindowAttributesAux::new().event_mask(EventMask::PROPERTY_CHANGE),
+        ).unwrap();
+        conn.flush().unwrap();
+
+        loop {
+            conn.wait_for_event().unwrap();
+            *self.current_window.lock().await = get_active_window_title(self.max_length, &self.user_empty_string);
+        }
     }
 
     async fn get_value(&self) -> ModuleOutput {

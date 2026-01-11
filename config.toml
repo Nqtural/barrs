@@ -1,9 +1,6 @@
-left = ["wpctl"]
-center = ["xworkspaces"]
-right = ["xwindow", "xkeyboard"]
-#left = ["loadavg", "memory", "wpctl", "filesystem"]
-#center = ["xworkspaces", "xwindow"]
-#right = ["brightnessctl", "network", "battery", "xkeyboard", "date"]
+left = ["loadavg", "memory", "wpctl", "filesystem"]
+center = ["xworkspaces", "xwindow"]
+right = ["brightnessctl", "network", "battery", "xkeyboard", "date"]
 
 separator = " | "
 
@@ -89,17 +86,14 @@ format = "{volume}%"
 format_muted = "MUTED ({volume}%)"
 
 [modules.xkeyboard]
-signal_id = 3
 icon = "LAY "
 icon_color = "#866fc1"
 
 [modules.xwindow]
-signal_id = 3
 max_length = 50
 empty_name = "Desktop"
 
 [modules.xworkspaces]
-signal_id = 3
 format_active = "[{name}]"
 format_empty = " {name} "
 format_occupied = " {name}."

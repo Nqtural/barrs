@@ -134,14 +134,12 @@ pub struct WpctlConfig {
 
 #[derive(Deserialize)]
 pub struct XkeyboardConfig {
-    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct XwindowConfig {
-    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub max_length: u32,
@@ -150,7 +148,6 @@ pub struct XwindowConfig {
 
 #[derive(Deserialize)]
 pub struct XworkspacesConfig {
-    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format_active: String,
