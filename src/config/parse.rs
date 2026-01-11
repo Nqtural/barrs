@@ -22,7 +22,11 @@ impl Config {
                 let contents = fs::read_to_string(&path)
                     .with_context(|| format!("failed to read config file at {:?}", path))?;
                 let config: Config = toml::from_str(&contents)
-                    .with_context(|| format!("failed to parse config file at {:?}", path))?;
+                    .map_err(|e| anyhow::anyhow!(
+                        "failed to parse config file at {:?}:\n{}",
+                        path,
+                        e,
+                    ))?;
                 return Ok(config);
             }
         }
