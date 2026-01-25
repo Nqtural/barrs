@@ -43,3 +43,9 @@ have an example below:
 
 **lemonbar:**
 `barrs | lemonbar -p -g x24 -f "SauceCodePro NF:size=10" -F "#ccccee" -B "#0d0d10"`
+
+### Update signal
+
+Barrs creates a socket file (`/tmp/barrs.sock`) which is used to update modules
+that implements `signal_id` in configuration. To update a module, run
+`barrs update <id>`.
