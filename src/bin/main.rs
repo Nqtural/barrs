@@ -11,8 +11,8 @@ async fn main() {
         let id = &args[2];
         let mut stream = match tokio::net::UnixStream::connect("/tmp/barrs.sock").await {
             Ok(stream) => stream,
-            Err(_) => {
-                eprintln!("error: could not connect to socket\nIs barrs running?");
+            Err(e) => {
+                eprintln!("error: could not connect to socket: {e}");
                 return;
             }
         };
