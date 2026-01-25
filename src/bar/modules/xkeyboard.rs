@@ -1,5 +1,8 @@
+use async_trait::async_trait;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto;
+use x11rb::protocol::xproto::{self, AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
 use x11rb::rust_connection::RustConnection;
 use crate::config::XkeyboardConfig;
 use crate::{Module, ModuleOutput};
@@ -7,31 +10,48 @@ use crate::{Module, ModuleOutput};
 /// Display current keyboard layout on X11
 #[derive(Debug)]
 pub struct XkeyboardModule {
-    current_layout: String,
+    tx: Sender<()>,
+    current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
 }
 
 impl XkeyboardModule {
-    pub fn new(config: &XkeyboardConfig) -> Self {
+    pub fn new(config: &XkeyboardConfig, tx: Sender<()>) -> Self {
         Self {
-            current_layout: get_current_keyboard_layout(),
+            tx,
+            current_layout: Mutex::new(get_current_keyboard_layout()),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
         }
     }
 }
 
+#[async_trait]
 impl Module for XkeyboardModule {
-    fn update(&mut self) {
-        self.current_layout = get_current_keyboard_layout();
+    async fn run(&self) {
+        let (conn, screen_num) = RustConnection::connect(None).unwrap();
+        let screen = &conn.setup().roots[screen_num];
+        let root = screen.root;
+        conn.change_window_attributes(
+            root,
+            &ChangeWindowAttributesAux::new()
+            .event_mask(EventMask::PROPERTY_CHANGE | EventMask::KEYMAP_STATE),
+        ).unwrap();
+        conn.flush().unwrap();
+
+        loop {
+            conn.wait_for_event().unwrap();
+            *self.current_layout.lock().await = get_current_keyboard_layout();
+            let _ = self.tx.send(());
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_layout.clone()
+            value: self.current_layout.lock().await.clone()
         }
     }
 }
@@ -59,7 +79,7 @@ fn get_current_keyboard_layout() -> String {
         false,
         root,
         atom,
-        xproto::AtomEnum::STRING,
+        AtomEnum::STRING,
         0,
         u32::MAX,
     ) {

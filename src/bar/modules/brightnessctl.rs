@@ -1,11 +1,16 @@
+use async_trait::async_trait;
 use std::process::Command;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use crate::config::BrightnessctlConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display brightness info about a given device using a configured format
 #[derive(Debug)]
 pub struct BrightnessctlModule {
-    current_brightness: String,
+    tx: Sender<()>,
+    signal_id: Option<u8>,
+    current_brightness: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     device_name: String,
@@ -13,14 +18,16 @@ pub struct BrightnessctlModule {
 }
 
 impl BrightnessctlModule {
-    pub fn new(config: &BrightnessctlConfig) -> Self {
+    pub fn new(config: &BrightnessctlConfig, tx: Sender<()>) -> Self {
         let device_name = config.device_name.clone();
         let format = config.format.clone();
         Self {
-            current_brightness: brightness_from_string(
+            tx,
+            signal_id: config.signal_id,
+            current_brightness: Mutex::new(brightness_from_string(
                 &device_name,
                 &format,
-            ),
+            )),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             device_name,
@@ -29,19 +36,25 @@ impl BrightnessctlModule {
     }
 }
 
+#[async_trait]
 impl Module for BrightnessctlModule {
-    fn update(&mut self) {
-        self.current_brightness = brightness_from_string(
+    fn signal_id(&self) -> Option<u8> {
+        self.signal_id
+    }
+
+    async fn run(&self) {
+        *self.current_brightness.lock().await = brightness_from_string(
             &self.device_name,
             &self.format,
         );
+        let _ = self.tx.send(());
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_brightness.clone(),
+            value: self.current_brightness.lock().await.clone(),
         }
     }
 }

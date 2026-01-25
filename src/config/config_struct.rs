@@ -31,7 +31,7 @@ pub struct ModuleConfig {
 
 #[derive(Deserialize)]
 pub struct BatteryConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub name: String,
@@ -42,7 +42,7 @@ pub struct BatteryConfig {
 
 #[derive(Deserialize)]
 pub struct BrightnessctlConfig {
-    pub interval: u32,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub device_name: String,
@@ -51,7 +51,7 @@ pub struct BrightnessctlConfig {
 
 #[derive(Deserialize)]
 pub struct CpuConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -59,7 +59,7 @@ pub struct CpuConfig {
 
 #[derive(Deserialize)]
 pub struct CputempConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -67,7 +67,7 @@ pub struct CputempConfig {
 
 #[derive(Deserialize)]
 pub struct DateConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -75,7 +75,7 @@ pub struct DateConfig {
 
 #[derive(Deserialize)]
 pub struct FilesystemConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -84,7 +84,7 @@ pub struct FilesystemConfig {
 
 #[derive(Deserialize)]
 pub struct KernelConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -92,7 +92,7 @@ pub struct KernelConfig {
 
 #[derive(Deserialize)]
 pub struct LoadavgConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -100,7 +100,7 @@ pub struct LoadavgConfig {
 
 #[derive(Deserialize)]
 pub struct MemoryConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -108,7 +108,7 @@ pub struct MemoryConfig {
 
 #[derive(Deserialize)]
 pub struct NetworkConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub interface: String,
@@ -117,7 +117,7 @@ pub struct NetworkConfig {
 
 #[derive(Deserialize)]
 pub struct UptimeConfig {
-    pub interval: u32,
+    pub interval: u64,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -125,7 +125,7 @@ pub struct UptimeConfig {
 
 #[derive(Deserialize)]
 pub struct WpctlConfig {
-    pub interval: u32,
+    pub signal_id: Option<u8>,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format: String,
@@ -134,14 +134,12 @@ pub struct WpctlConfig {
 
 #[derive(Deserialize)]
 pub struct XkeyboardConfig {
-    pub interval: u32,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct XwindowConfig {
-    pub interval: u32,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub max_length: u32,
@@ -150,7 +148,6 @@ pub struct XwindowConfig {
 
 #[derive(Deserialize)]
 pub struct XworkspacesConfig {
-    pub interval: u32,
     pub icon: Option<String>,
     pub icon_color: Option<String>,
     pub format_active: String,

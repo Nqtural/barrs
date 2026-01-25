@@ -1,21 +1,29 @@
+use async_trait::async_trait;
 use std::fs;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use crate::config::KernelConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display date using a configured format
 #[derive(Debug)]
 pub struct KernelModule {
-    kernel_info: String,
+    tx: Sender<()>,
+    interval: u64,
+    kernel_info: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
 }
 
 impl KernelModule {
-    pub fn new(config: &KernelConfig) -> Self {
+    pub fn new(config: &KernelConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         Self {
-            kernel_info: kernel_info_from_string(&format),
+            tx,
+            interval: config.interval,
+            kernel_info: Mutex::new(kernel_info_from_string(&format)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
@@ -23,16 +31,21 @@ impl KernelModule {
     }
 }
 
+#[async_trait]
 impl Module for KernelModule {
-    fn update(&mut self) {
-        self.kernel_info = kernel_info_from_string(&self.format);
+    async fn run(&self) {
+        loop {
+            *self.kernel_info.lock().await = kernel_info_from_string(&self.format);
+            let _ = self.tx.send(());
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.kernel_info.clone(),
+            value: self.kernel_info.lock().await.clone(),
         }
     }
 }

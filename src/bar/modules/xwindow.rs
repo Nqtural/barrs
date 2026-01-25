@@ -1,5 +1,8 @@
+use async_trait::async_trait;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::{AtomEnum, ConnectionExt};
+use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
 use x11rb::rust_connection::RustConnection;
 use crate::config::XwindowConfig;
 use crate::{Module, ModuleOutput};
@@ -7,7 +10,8 @@ use crate::{Module, ModuleOutput};
 /// Display current window name on X11
 #[derive(Debug)]
 pub struct XwindowModule {
-    current_window: String,
+    tx: Sender<()>,
+    current_window: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     max_length: u32,
@@ -15,11 +19,12 @@ pub struct XwindowModule {
 }
 
 impl XwindowModule {
-    pub fn new(config: &XwindowConfig) -> Self {
+    pub fn new(config: &XwindowConfig, tx: Sender<()>) -> Self {
         let max_length = config.max_length;
         let user_empty_string = config.empty_name.clone();
         Self {
-            current_window: get_active_window_title(max_length, &user_empty_string),
+            tx,
+            current_window: Mutex::new(get_active_window_title(max_length, &user_empty_string)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             max_length,
@@ -28,16 +33,30 @@ impl XwindowModule {
     }
 }
 
+#[async_trait]
 impl Module for XwindowModule {
-    fn update(&mut self) {
-        self.current_window = get_active_window_title(self.max_length, &self.user_empty_string);
+    async fn run(&self) {
+        let (conn, screen_num) = RustConnection::connect(None).unwrap();
+        let screen = &conn.setup().roots[screen_num];
+        let root = screen.root;
+        conn.change_window_attributes(
+            root,
+            &ChangeWindowAttributesAux::new().event_mask(EventMask::PROPERTY_CHANGE),
+        ).unwrap();
+        conn.flush().unwrap();
+
+        loop {
+            conn.wait_for_event().unwrap();
+            *self.current_window.lock().await = get_active_window_title(self.max_length, &self.user_empty_string);
+            let _ = self.tx.send(());
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_window.clone()
+            value: self.current_window.lock().await.clone()
         }
     }
 }

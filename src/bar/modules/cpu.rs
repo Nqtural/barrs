@@ -1,56 +1,69 @@
+use async_trait::async_trait;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use std::fs;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::mpsc::Sender;
 use crate::config::CpuConfig;
 use crate::{Module, ModuleOutput};
 
 #[derive(Debug)]
 pub struct CpuModule {
-    current_usage: String,
+    tx: Sender<()>,
+    interval: u64,
+    current_usage: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
-    prev_total: u64,
-    prev_idle: u64,
+    prev_total: AtomicU64,
+    prev_idle: AtomicU64,
 }
 
 impl CpuModule {
-    pub fn new(config: &CpuConfig) -> Self {
+    pub fn new(config: &CpuConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         let (total, idle) = read_cpu_jiffies().unwrap_or((0, 0));
-        let current_usage = calculate_usage(&format, total, idle, total, idle);
 
         Self {
-            current_usage,
+            tx,
+            interval: config.interval,
+            current_usage: Mutex::new(calculate_usage(&format, total, idle, total, idle)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
-            prev_total: total,
-            prev_idle: idle,
+            prev_total: AtomicU64::new(total),
+            prev_idle: AtomicU64::new(idle),
         }
     }
 }
 
+#[async_trait]
 impl Module for CpuModule {
-    fn update(&mut self) {
-        if let Some((total, idle)) = read_cpu_jiffies() {
-            self.current_usage = calculate_usage(
-                &self.format,
-                self.prev_total,
-                self.prev_idle,
-                total,
-                idle,
-            );
+    async fn run(&self) {
+        loop {
+            if let Some((total, idle)) = read_cpu_jiffies() {
+                *self.current_usage.lock().await = calculate_usage(
+                    &self.format,
+                    self.prev_total.load(Ordering::SeqCst),
+                    self.prev_idle.load(Ordering::SeqCst),
+                    total,
+                    idle,
+                );
 
-            // Save snapshot for next update
-            self.prev_total = total;
-            self.prev_idle = idle;
+                // Save snapshot for next update
+                self.prev_total.store(total, Ordering::SeqCst);
+                self.prev_idle.store(idle, Ordering::SeqCst);
+            }
+            let _ = self.tx.send(());
+            sleep(Duration::from_secs(self.interval)).await;
         }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_usage.clone(),
+            value: self.current_usage.lock().await.clone(),
         }
     }
 }

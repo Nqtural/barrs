@@ -1,7 +1,10 @@
 use anyhow::Result;
+use async_trait::async_trait;
 use std::collections::HashSet;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::{AtomEnum, ConnectionExt};
+use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
 use x11rb::rust_connection::RustConnection;
 use crate::config::XworkspacesConfig;
 use crate::{Module, ModuleOutput};
@@ -9,7 +12,8 @@ use crate::{Module, ModuleOutput};
 /// Display X11 workspaces using a configured format
 #[derive(Debug)]
 pub struct XworkspacesModule {
-    current_layout: String,
+    tx: Sender<()>,
+    current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format_active: String,
@@ -20,20 +24,21 @@ pub struct XworkspacesModule {
 }
 
 impl XworkspacesModule {
-    pub fn new(config: &XworkspacesConfig) -> Self {
+    pub fn new(config: &XworkspacesConfig, tx: Sender<()>) -> Self {
         let format_active = config.format_active.clone();
         let format_empty = config.format_empty.clone();
         let format_occupied = config.format_occupied.clone();
         let format_urgent = config.format_urgent.clone();
         let sepparator = config.sepparator.clone();
         Self {
-            current_layout: format_workspaces(
+            tx,
+            current_layout: Mutex::new(format_workspaces(
                 &format_active,
                 &format_empty,
                 &format_occupied,
                 &format_urgent,
                 &sepparator,
-            ),
+            )),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format_active,
@@ -45,22 +50,41 @@ impl XworkspacesModule {
     }
 }
 
+#[async_trait]
 impl Module for XworkspacesModule {
-    fn update(&mut self) {
-        self.current_layout = format_workspaces(
-            &self.format_active,
-            &self.format_empty,
-            &self.format_occupied,
-            &self.format_urgent,
-            &self.sepparator,
-        );
+    async fn run(&self) {
+        let (conn, screen_num) = RustConnection::connect(None).unwrap();
+        let screen = &conn.setup().roots[screen_num];
+        let root = screen.root;
+        conn.change_window_attributes(
+            root,
+            &ChangeWindowAttributesAux::new().event_mask(EventMask::PROPERTY_CHANGE),
+        ).unwrap();
+        conn.flush().unwrap();
+
+        loop {
+            // Not filtering to only update on active workspace change
+            // causes multiple redraws, but is necessary for updates to
+            // urgent/occupied fields without changing active workspace
+            conn.wait_for_event().unwrap();
+
+            *self.current_layout.lock().await = format_workspaces(
+                &self.format_active,
+                &self.format_empty,
+                &self.format_occupied,
+                &self.format_urgent,
+                &self.sepparator,
+            );
+
+            let _ = self.tx.send(());
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_layout.clone()
+            value: self.current_layout.lock().await.clone()
         }
     }
 }

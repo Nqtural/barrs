@@ -1,21 +1,29 @@
+use async_trait::async_trait;
 use std::fs;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use crate::config::LoadavgConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display average CPU load using a configured format
 #[derive(Debug)]
 pub struct LoadavgModule {
-    current_loadavg: String,
+    tx: Sender<()>,
+    interval: u64,
+    current_loadavg: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
     format: String,
 }
 
 impl LoadavgModule {
-    pub fn new(config: &LoadavgConfig) -> Self {
+    pub fn new(config: &LoadavgConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         Self {
-            current_loadavg: loadavg_from_string(&format),
+            tx,
+            interval: config.interval,
+            current_loadavg: Mutex::new(loadavg_from_string(&format)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
             format,
@@ -23,16 +31,21 @@ impl LoadavgModule {
     }
 }
 
+#[async_trait]
 impl Module for LoadavgModule {
-    fn update(&mut self) {
-        self.current_loadavg = loadavg_from_string(&self.format);
+    async fn run(&self) {
+        loop {
+            *self.current_loadavg.lock().await = loadavg_from_string(&self.format);
+            let _ = self.tx.send(());
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_loadavg.clone(),
+            value: self.current_loadavg.lock().await.clone(),
         }
     }
 }

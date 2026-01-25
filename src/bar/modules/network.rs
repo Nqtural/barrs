@@ -1,24 +1,30 @@
+use async_trait::async_trait;
 use if_addrs::get_if_addrs;
 use std::fs;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use crate::config::NetworkConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display information about a given network interface using a configured format
 #[derive(Debug)]
 pub struct NetworkModule {
-    current_net: String,
+    tx: Sender<()>,
+    interval: u64,
+    current_net: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
-    interval: f64,
     interface: String,
     format: String,
-    prev_rx: u64,
-    prev_tx: u64,
+    prev_rx: AtomicU64,
+    prev_tx: AtomicU64,
 }
 
 impl NetworkModule {
-    pub fn new(config: &NetworkConfig) -> Self {
-        let interval = config.interval as f64;
+    pub fn new(config: &NetworkConfig, tx: Sender<()>) -> Self {
+        let interval = config.interval;
         let interface = config.interface.clone();
         let format = config.format.clone();
         let (current_net, prev_rx, prev_tx) = network_info_from_string(
@@ -30,34 +36,44 @@ impl NetworkModule {
         );
 
         Self {
-            current_net,
+            tx,
+            interval,
+            current_net: Mutex::new(current_net),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
-            interval,
             interface,
             format,
-            prev_rx,
-            prev_tx,
+            prev_rx: AtomicU64::new(prev_rx),
+            prev_tx: AtomicU64::new(prev_tx),
         }
     }
 }
 
+#[async_trait]
 impl Module for NetworkModule {
-    fn update(&mut self) {
-        (self.current_net, self.prev_rx, self.prev_tx) = network_info_from_string(
-            &self.interface,
-            &self.format,
-            self.prev_rx,
-            self.prev_tx,
-            self.interval,
-        );
+    async fn run(&self) {
+        loop {
+            let (current_net, prev_rx, prev_tx) = network_info_from_string(
+                &self.interface,
+                &self.format,
+                self.prev_rx.load(Ordering::SeqCst),
+                self.prev_tx.load(Ordering::SeqCst),
+                self.interval,
+            );
+            *self.current_net.lock().await = current_net;
+            self.prev_rx.store(prev_rx, Ordering::SeqCst);
+            self.prev_tx.store(prev_tx, Ordering::SeqCst);
+
+            let _ = self.tx.send(());
+            sleep(Duration::from_secs(self.interval)).await;
+        }
     }
 
-    fn get_value(&self) -> ModuleOutput {
+    async fn get_value(&self) -> ModuleOutput {
         ModuleOutput {
             icon: self.icon.clone(),
             icon_color: self.icon_color.clone(),
-            value: self.current_net.clone(),
+            value: self.current_net.lock().await.clone(),
         }
     }
 }
@@ -113,13 +129,13 @@ pub fn network_info_from_string(
     format: &str,
     prev_rx: u64,
     prev_tx: u64,
-    delta_secs: f64,
+    delta_secs: u64,
 ) -> (String, u64, u64) {
     let state = read_state(iface);
     let (rx_bytes, tx_bytes) = read_bytes(iface);
 
-    let rx_speed_bps = ((rx_bytes.saturating_sub(prev_rx)) as f64 / delta_secs) as u64;
-    let tx_speed_bps = ((tx_bytes.saturating_sub(prev_tx)) as f64 / delta_secs) as u64;
+    let rx_speed_bps = rx_bytes.saturating_sub(prev_rx) / delta_secs;
+    let tx_speed_bps = tx_bytes.saturating_sub(prev_tx) / delta_secs;
 
     let (rx_bit, rx_kbit, rx_mbit, rx_gbit) = bytes_to_units(rx_speed_bps);
     let (tx_bit, tx_kbit, tx_mbit, tx_gbit) = bytes_to_units(tx_speed_bps);
