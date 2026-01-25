@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::sync::mpsc::Sender;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::UnixListener;
 use crate::Config;
@@ -15,11 +16,11 @@ pub struct Bar {
 }
 
 impl Bar {
-    pub fn new(config: &Config) -> Self {
+    pub fn new(config: &Config, tx: Sender<()>) -> Self {
         Self {
-            left: build_modules(&config.left, &config.modules),
-            center: build_modules(&config.center, &config.modules),
-            right: build_modules(&config.right, &config.modules),
+            left: build_modules(&config.left, &config.modules, &tx),
+            center: build_modules(&config.center, &config.modules, &tx),
+            right: build_modules(&config.right, &config.modules, &tx),
             separator: config.separator.clone(),
             frontend: config.frontend.clone(),
         }

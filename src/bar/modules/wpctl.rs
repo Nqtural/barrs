@@ -1,12 +1,14 @@
 use async_trait::async_trait;
-use tokio::sync::Mutex;
 use std::process::Command;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use crate::config::WpctlConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display wpctl info using a configured format
 #[derive(Debug)]
 pub struct WpctlModule {
+    tx: Sender<()>,
     signal_id: Option<u8>,
     current_audio: Mutex<String>,
     icon: Option<String>,
@@ -16,10 +18,11 @@ pub struct WpctlModule {
 }
 
 impl WpctlModule {
-    pub fn new(config: &WpctlConfig) -> Self {
+    pub fn new(config: &WpctlConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         let format_muted = config.format_muted.clone();
         Self {
+            tx,
             signal_id: config.signal_id,
             current_audio: Mutex::new(audio_from_string(&format, &format_muted)),
             icon: config.icon.clone(),
@@ -38,6 +41,7 @@ impl Module for WpctlModule {
 
     async fn run(&self) {
         *self.current_audio.lock().await = audio_from_string(&self.format, &self.format_muted);
+        let _ = self.tx.send(());
     }
 
     async fn get_value(&self) -> ModuleOutput {

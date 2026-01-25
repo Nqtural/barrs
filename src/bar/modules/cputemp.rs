@@ -3,12 +3,14 @@ use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 use std::fs;
 use std::path::Path;
+use std::sync::mpsc::Sender;
 use crate::config::CputempConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display temperature of CPU using a configured format
 #[derive(Debug)]
 pub struct CputempModule {
+    tx: Sender<()>,
     interval: u64,
     current_temp: Mutex<String>,
     icon: Option<String>,
@@ -17,9 +19,10 @@ pub struct CputempModule {
 }
 
 impl CputempModule {
-    pub fn new(config: &CputempConfig) -> Self {
+    pub fn new(config: &CputempConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         Self {
+            tx,
             interval: config.interval,
             current_temp: Mutex::new(cputemp_from_string(&format)),
             icon: config.icon.clone(),
@@ -34,6 +37,7 @@ impl Module for CputempModule {
     async fn run(&self) {
         loop {
             *self.current_temp.lock().await = cputemp_from_string(&self.format);
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

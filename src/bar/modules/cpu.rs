@@ -3,11 +3,13 @@ use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 use std::fs;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::mpsc::Sender;
 use crate::config::CpuConfig;
 use crate::{Module, ModuleOutput};
 
 #[derive(Debug)]
 pub struct CpuModule {
+    tx: Sender<()>,
     interval: u64,
     current_usage: Mutex<String>,
     icon: Option<String>,
@@ -18,11 +20,12 @@ pub struct CpuModule {
 }
 
 impl CpuModule {
-    pub fn new(config: &CpuConfig) -> Self {
+    pub fn new(config: &CpuConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         let (total, idle) = read_cpu_jiffies().unwrap_or((0, 0));
 
         Self {
+            tx,
             interval: config.interval,
             current_usage: Mutex::new(calculate_usage(&format, total, idle, total, idle)),
             icon: config.icon.clone(),
@@ -51,6 +54,7 @@ impl Module for CpuModule {
                 self.prev_total.store(total, Ordering::SeqCst);
                 self.prev_idle.store(idle, Ordering::SeqCst);
             }
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

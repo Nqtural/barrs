@@ -2,6 +2,7 @@ use async_trait::async_trait;
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
 use std::ffi::CString;
+use std::sync::mpsc::Sender;
 use libc;
 use std::mem::MaybeUninit;
 use crate::config::FilesystemConfig;
@@ -10,6 +11,7 @@ use crate::{Module, ModuleOutput};
 /// Display information about the filesystem using a configured format
 #[derive(Debug)]
 pub struct FilesystemModule {
+    tx: Sender<()>,
     interval: u64,
     current_fs_info: Mutex<String>,
     icon: Option<String>,
@@ -19,10 +21,11 @@ pub struct FilesystemModule {
 }
 
 impl FilesystemModule {
-    pub fn new(config: &FilesystemConfig) -> Self {
+    pub fn new(config: &FilesystemConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         let mountpoint = config.mountpoint.clone();
         Self {
+            tx,
             interval: config.interval,
             current_fs_info: Mutex::new(fs_info_from_string(&format, &mountpoint)),
             icon: config.icon.clone(),
@@ -38,6 +41,7 @@ impl Module for FilesystemModule {
     async fn run(&self) {
         loop {
             *self.current_fs_info.lock().await = fs_info_from_string(&self.format, &self.mountpoint);
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

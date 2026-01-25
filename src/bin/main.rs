@@ -1,5 +1,5 @@
+use std::sync::mpsc;
 use tokio::io::AsyncWriteExt;
-use tokio::time::{Duration, sleep};
 
 use barrs::Config;
 use barrs::Bar;
@@ -27,7 +27,8 @@ async fn main() {
             return;
         }
     };
-    let bar = Bar::new(&config);
+    let (tx, rx) = mpsc::channel();
+    let bar = Bar::new(&config, tx);
     bar.start_modules();
     bar.start_command_listener("/tmp/barrs.sock").await;
 
@@ -36,6 +37,8 @@ async fn main() {
             "{}",
             bar.construct().await,
         );
-        sleep(Duration::from_secs(1)).await;
+
+        // wait for any module to send update signal
+        rx.recv().unwrap();
     }
 }

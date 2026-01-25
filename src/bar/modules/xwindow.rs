@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
@@ -9,6 +10,7 @@ use crate::{Module, ModuleOutput};
 /// Display current window name on X11
 #[derive(Debug)]
 pub struct XwindowModule {
+    tx: Sender<()>,
     current_window: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -17,10 +19,11 @@ pub struct XwindowModule {
 }
 
 impl XwindowModule {
-    pub fn new(config: &XwindowConfig) -> Self {
+    pub fn new(config: &XwindowConfig, tx: Sender<()>) -> Self {
         let max_length = config.max_length;
         let user_empty_string = config.empty_name.clone();
         Self {
+            tx,
             current_window: Mutex::new(get_active_window_title(max_length, &user_empty_string)),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
@@ -45,6 +48,7 @@ impl Module for XwindowModule {
         loop {
             conn.wait_for_event().unwrap();
             *self.current_window.lock().await = get_active_window_title(self.max_length, &self.user_empty_string);
+            let _ = self.tx.send(());
         }
     }
 

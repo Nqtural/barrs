@@ -1,13 +1,15 @@
 use async_trait::async_trait;
+use std::fs;
+use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
-use std::fs;
 use crate::config::MemoryConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display sytem memory usage using a configured format
 #[derive(Debug)]
 pub struct MemoryModule {
+    tx: Sender<()>,
     interval: u64,
     current_usage: Mutex<String>,
     icon: Option<String>,
@@ -17,9 +19,10 @@ pub struct MemoryModule {
 
 /// Display system memory usage using a configured format
 impl MemoryModule {
-    pub fn new(config: &MemoryConfig) -> Self {
+    pub fn new(config: &MemoryConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         Self {
+            tx,
             interval: config.interval,
             current_usage: Mutex::new(usage_from_string(&format)),
             icon: config.icon.clone(),
@@ -34,6 +37,7 @@ impl Module for MemoryModule {
     async fn run(&self) {
         loop {
             *self.current_usage.lock().await = usage_from_string(&self.format);
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::sync::mpsc::Sender;
 use crate::{Module, ModuleOutput};
 
 #[derive(Debug)]
@@ -7,7 +8,7 @@ pub struct InvalidModule {
 }
 
 impl InvalidModule {
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, _tx: Sender<()>) -> Self {
         Self {
             value: format!("error: invalid module name: {}", name),
         }

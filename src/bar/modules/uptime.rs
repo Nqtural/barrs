@@ -1,13 +1,15 @@
 use async_trait::async_trait;
+use std::fs;
+use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
-use std::fs;
 use crate::config::UptimeConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display uptime using a configured format
 #[derive(Debug)]
 pub struct UptimeModule {
+    tx: Sender<()>,
     interval: u64,
     current_uptime: Mutex<String>,
     icon: Option<String>,
@@ -16,9 +18,10 @@ pub struct UptimeModule {
 }
 
 impl UptimeModule {
-    pub fn new(config: &UptimeConfig) -> Self {
+    pub fn new(config: &UptimeConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         Self {
+            tx,
             interval: config.interval,
             current_uptime: Mutex::new(uptime_from_string(&format)),
             icon: config.icon.clone(),
@@ -33,6 +36,7 @@ impl Module for UptimeModule {
     async fn run(&self) {
         loop {
             *self.current_uptime.lock().await = uptime_from_string(&self.format);
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

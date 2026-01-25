@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use std::fs;
+use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
 use crate::config::BatteryConfig;
@@ -8,6 +9,7 @@ use crate::{Module, ModuleOutput};
 /// Display battery info using a configured format
 #[derive(Debug)]
 pub struct BatteryModule {
+    tx: Sender<()>,
     interval: u64,
     current_battery: Mutex<String>,
     icon: Option<String>,
@@ -19,13 +21,14 @@ pub struct BatteryModule {
 }
 
 impl BatteryModule {
-    pub fn new(config: &BatteryConfig) -> Self {
+    pub fn new(config: &BatteryConfig, tx: Sender<()>) -> Self {
         let interval = config.interval;
         let name = config.name.clone();
         let format_charging = config.format_charging.clone();
         let format_discharging = config.format_discharging.clone();
         let format_full = config.format_full.clone();
         Self {
+            tx,
             interval,
             current_battery: Mutex::new(battery_from_string(
                 &name,
@@ -55,6 +58,7 @@ impl Module for BatteryModule {
                     &self.format_full,
                 );
             }
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

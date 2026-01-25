@@ -1,13 +1,15 @@
 use async_trait::async_trait;
+use std::fs;
+use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use tokio::time::{Duration, sleep};
-use std::fs;
 use crate::config::LoadavgConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display average CPU load using a configured format
 #[derive(Debug)]
 pub struct LoadavgModule {
+    tx: Sender<()>,
     interval: u64,
     current_loadavg: Mutex<String>,
     icon: Option<String>,
@@ -16,9 +18,10 @@ pub struct LoadavgModule {
 }
 
 impl LoadavgModule {
-    pub fn new(config: &LoadavgConfig) -> Self {
+    pub fn new(config: &LoadavgConfig, tx: Sender<()>) -> Self {
         let format = config.format.clone();
         Self {
+            tx,
             interval: config.interval,
             current_loadavg: Mutex::new(loadavg_from_string(&format)),
             icon: config.icon.clone(),
@@ -33,6 +36,7 @@ impl Module for LoadavgModule {
     async fn run(&self) {
         loop {
             *self.current_loadavg.lock().await = loadavg_from_string(&self.format);
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }

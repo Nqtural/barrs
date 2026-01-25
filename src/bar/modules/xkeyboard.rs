@@ -1,4 +1,5 @@
 use async_trait::async_trait;
+use std::sync::mpsc::Sender;
 use tokio::sync::Mutex;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::{self, AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
@@ -9,14 +10,16 @@ use crate::{Module, ModuleOutput};
 /// Display current keyboard layout on X11
 #[derive(Debug)]
 pub struct XkeyboardModule {
+    tx: Sender<()>,
     current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
 }
 
 impl XkeyboardModule {
-    pub fn new(config: &XkeyboardConfig) -> Self {
+    pub fn new(config: &XkeyboardConfig, tx: Sender<()>) -> Self {
         Self {
+            tx,
             current_layout: Mutex::new(get_current_keyboard_layout()),
             icon: config.icon.clone(),
             icon_color: config.icon_color.clone(),
@@ -40,6 +43,7 @@ impl Module for XkeyboardModule {
         loop {
             conn.wait_for_event().unwrap();
             *self.current_layout.lock().await = get_current_keyboard_layout();
+            let _ = self.tx.send(());
         }
     }
 

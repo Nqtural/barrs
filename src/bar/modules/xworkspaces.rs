@@ -1,7 +1,8 @@
-use async_trait::async_trait;
-use tokio::sync::Mutex;
 use anyhow::Result;
+use async_trait::async_trait;
 use std::collections::HashSet;
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
 use x11rb::connection::Connection;
 use x11rb::protocol::xproto::{AtomEnum, ChangeWindowAttributesAux, ConnectionExt, EventMask};
 use x11rb::rust_connection::RustConnection;
@@ -11,6 +12,7 @@ use crate::{Module, ModuleOutput};
 /// Display X11 workspaces using a configured format
 #[derive(Debug)]
 pub struct XworkspacesModule {
+    tx: Sender<()>,
     current_layout: Mutex<String>,
     icon: Option<String>,
     icon_color: Option<String>,
@@ -22,13 +24,14 @@ pub struct XworkspacesModule {
 }
 
 impl XworkspacesModule {
-    pub fn new(config: &XworkspacesConfig) -> Self {
+    pub fn new(config: &XworkspacesConfig, tx: Sender<()>) -> Self {
         let format_active = config.format_active.clone();
         let format_empty = config.format_empty.clone();
         let format_occupied = config.format_occupied.clone();
         let format_urgent = config.format_urgent.clone();
         let sepparator = config.sepparator.clone();
         Self {
+            tx,
             current_layout: Mutex::new(format_workspaces(
                 &format_active,
                 &format_empty,
@@ -72,6 +75,8 @@ impl Module for XworkspacesModule {
                 &self.format_urgent,
                 &self.sepparator,
             );
+
+            let _ = self.tx.send(());
         }
     }
 

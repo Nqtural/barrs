@@ -1,15 +1,17 @@
 use async_trait::async_trait;
-use tokio::sync::Mutex;
-use tokio::time::{Duration, sleep};
 use if_addrs::get_if_addrs;
 use std::fs;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::mpsc::Sender;
+use tokio::sync::Mutex;
+use tokio::time::{Duration, sleep};
 use crate::config::NetworkConfig;
 use crate::{Module, ModuleOutput};
 
 /// Display information about a given network interface using a configured format
 #[derive(Debug)]
 pub struct NetworkModule {
+    tx: Sender<()>,
     interval: u64,
     current_net: Mutex<String>,
     icon: Option<String>,
@@ -21,7 +23,7 @@ pub struct NetworkModule {
 }
 
 impl NetworkModule {
-    pub fn new(config: &NetworkConfig) -> Self {
+    pub fn new(config: &NetworkConfig, tx: Sender<()>) -> Self {
         let interval = config.interval;
         let interface = config.interface.clone();
         let format = config.format.clone();
@@ -34,6 +36,7 @@ impl NetworkModule {
         );
 
         Self {
+            tx,
             interval,
             current_net: Mutex::new(current_net),
             icon: config.icon.clone(),
@@ -61,6 +64,7 @@ impl Module for NetworkModule {
             self.prev_rx.store(prev_rx, Ordering::SeqCst);
             self.prev_tx.store(prev_tx, Ordering::SeqCst);
 
+            let _ = self.tx.send(());
             sleep(Duration::from_secs(self.interval)).await;
         }
     }
